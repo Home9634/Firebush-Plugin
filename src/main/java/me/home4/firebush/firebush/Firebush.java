@@ -31,6 +31,8 @@ public final class Firebush extends JavaPlugin {
         getCommand("die").setExecutor(new DieCommand());
         getCommand("startsession").setExecutor(new StartSessionCommand(this));
         getCommand("refreshseason").setExecutor(new RefreshSeasonCommand(this));
+        getCommand("claimtarget").setExecutor(new ClaimTargetCommand());
+        getCommand("replenish").setExecutor(new ReplenishCommand());
 
         getConfig().options().copyDefaults();
         plugin.saveDefaultConfig();

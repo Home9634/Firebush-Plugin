@@ -36,14 +36,14 @@ public class StartSessionCommand implements CommandExecutor {
                 String uuid = alivePlayers.get(i);
                 String target = alivePlayers.get(i + 1);
                 Players.get().set(uuid + ".target", target);
-                ActionBar.setActionBarMessage(UUID.fromString(uuid), ChatColor.LIGHT_PURPLE + Players.get().getString(target + ".nick"));
+                //ActionBar.setActionBarMessage(UUID.fromString(uuid), ChatColor.LIGHT_PURPLE + Players.get().getString(target + ".nick"));
             }
 
             String lastPlayerUUID = alivePlayers.get(alivePlayers.size() - 1);
             String lastTargetUUID = alivePlayers.get(0);
 
             Players.get().set(lastPlayerUUID + ".target", lastTargetUUID);
-            ActionBar.setActionBarMessage(UUID.fromString(lastPlayerUUID), ChatColor.LIGHT_PURPLE + Players.get().getString(lastTargetUUID + ".nick"));
+            //ActionBar.setActionBarMessage(UUID.fromString(lastPlayerUUID), ChatColor.LIGHT_PURPLE + Players.get().getString(lastTargetUUID + ".nick"));
             Players.save();
         }
 

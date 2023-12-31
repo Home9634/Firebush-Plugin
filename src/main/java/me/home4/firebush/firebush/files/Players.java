@@ -98,7 +98,7 @@ public class Players {
     }
 
     public static String getNick(String uuid) {
-        return customFile.getString("nick");
+        return Players.get().getString(uuid + ".nick");
     }
 
     public static void resetLives() {
@@ -167,7 +167,7 @@ public class Players {
         String playerUUID = player.getUniqueId().toString();
 
         Players.get().set(playerUUID + ".lives", 3);
-        Players.setNick(playerUUID + ".nick", player.getName());
+        Players.setNick(playerUUID, player.getName());
         Players.get().set(playerUUID + ".target", "");
         Players.get().set(playerUUID + ".extraLives", 0);
         Players.get().set(playerUUID + ".isPink", false);

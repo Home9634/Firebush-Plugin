@@ -4,6 +4,7 @@ me\home4\firebush\firebush\commands\StartSessionCommand.class
 me\home4\firebush\firebush\gui\ActionBar.class
 me\home4\firebush\firebush\files\Players.class
 me\home4\firebush\firebush\commands\ClaimTargetCommand.class
+me\home4\firebush\firebush\commands\ReplenishCommand.class
 me\home4\firebush\firebush\commands\SetLivesCommand.class
 me\home4\firebush\firebush\gui\ActionBarTask.class
 me\home4\firebush\firebush\listeners\AllListeners.class

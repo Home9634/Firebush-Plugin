@@ -19,3 +19,10 @@ commands:
   refreshseason:
     description: Refreshes the season, resetting states of all players.
     usage: /<command>
+  claimtarget:
+    description: Claims your target kill.
+    usage: /<command>
+  replenish:
+    description: Replenish the health of players.
+    usage: /<command>
+    permission: op
