@@ -1,0 +1,21 @@
+name: Firebush
+version: '${project.version}'
+main: me.home4.firebush.firebush.Firebush
+api-version: '1.20'
+description: A plugin inspired by Grian's YouTube series 3rd Life
+commands:
+  resetlives:
+    description: Reset all lives.
+    usage: /<command>
+  setlives:
+    description: Set the lives of a specific player.
+    usage: /<command>
+  die:
+    description: Kills the player.
+    usage: /<command>
+  startsession:
+    description: Starts the session.
+    usage: /<command>
+  refreshseason:
+    description: Refreshes the season, resetting states of all players.
+    usage: /<command>
