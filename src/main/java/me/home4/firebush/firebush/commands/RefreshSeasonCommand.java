@@ -3,6 +3,8 @@ package me.home4.firebush.firebush.commands;
 import me.home4.firebush.firebush.Firebush;
 import me.home4.firebush.firebush.files.Players;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -27,8 +29,17 @@ public class RefreshSeasonCommand implements CommandExecutor {
         Players.clear();
         for (Player player: Bukkit.getOnlinePlayers()) {
             System.out.println(player.getName());
-            Players.definePlayer(player);
+            String uuid = player.getUniqueId().toString();
+            if (!Players.get().getBoolean(uuid + ".excluded")) {
+                Players.definePlayer(player);
+                player.setGameMode(GameMode.SURVIVAL);
+            }
 
+            if (plugin.getConfig().getBoolean("uhc")) {
+                int maxHeart = plugin.getConfig().getInt("uhcMaxHearts");
+                player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(maxHeart);
+                player.setHealth(maxHeart);
+            }
         }
 
         return true;

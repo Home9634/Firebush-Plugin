@@ -16,14 +16,17 @@ public class ReplenishCommand implements CommandExecutor {
         if (args.length == 0) {
             for (Player player: Bukkit.getOnlinePlayers()) {
                 player.setFoodLevel(20);
-                player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+                player.setHealth(player.getAttribute(Attribute.MAX_HEALTH).getValue());
             }
         }
 
         if (args.length == 1) {
-            Player player = (Player) Bukkit.getPlayer(Players.getUUIDfromNick(args[0]));
+            Player player = Bukkit.getPlayer(Players.getUUIDfromNick(args[0]));
+            if (player == null) {
+                return true;
+            }
             player.setFoodLevel(20);
-            player.setHealth(player.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue());
+            player.setHealth(player.getAttribute(Attribute.MAX_HEALTH).getValue());
         }
 
         if (sender instanceof Player) {

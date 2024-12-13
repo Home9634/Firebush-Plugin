@@ -7,18 +7,26 @@ commands:
   resetlives:
     description: Reset all lives.
     usage: /<command>
+    permission: op
   setlives:
     description: Set the lives of a specific player.
     usage: /<command>
+    permission: op
   die:
     description: Kills the player.
     usage: /<command>
   startsession:
     description: Starts the session.
     usage: /<command>
+    permission: op
+  endsession:
+    description: Ends the session.
+    usage: /<command>
+    permission: op
   refreshseason:
     description: Refreshes the season, resetting states of all players.
     usage: /<command>
+    permission: op
   claimtarget:
     description: Claims your target kill.
     usage: /<command>
@@ -26,3 +34,27 @@ commands:
     description: Replenish the health of players.
     usage: /<command>
     permission: op
+  exclude:
+    description: Excludes a player from Firebush.
+    usage: /<command>
+    permission: op
+  gift:
+    description: Gift a heart to another player.
+    usage: /<command>
+  setsession:
+    description: Sets the session number to the argument provided.
+    usage: /<command>
+    permission: op
+  claimquest:
+    description: Claims a player's Quest.
+    usage: /<command>
+  modifyhearts:
+    description: Modifies a player's Hearts.
+    usage: /<command>
+    permission: op
+  failquest:
+    description: Fails a player's Quest.
+    usage: /<command>
+  rerollquest:
+    description: Rerolls a player's Quest.
+    usage: /<command>
