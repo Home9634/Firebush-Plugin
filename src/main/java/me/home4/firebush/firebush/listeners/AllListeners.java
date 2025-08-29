@@ -65,13 +65,13 @@ public class AllListeners implements Listener {
         Players.setLifeColor(playerUUID);
         //ActionBar.setActionBarMessage(player.getUniqueId(), "Tree");
 
-        Players.loadInventory(player);
+//        Players.loadInventory(player);
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         Player player = event.getPlayer();
-        Players.saveInventory(player);
+//        Players.saveInventory(player);
     }
 
     @EventHandler
@@ -115,6 +115,25 @@ public class AllListeners implements Listener {
                 for (Player onlinePlayer : Bukkit.getOnlinePlayers()) {
                     onlinePlayer.playSound(onlinePlayer.getLocation(), Sound.ENTITY_ARROW_HIT_PLAYER, 1.0f, 1.0f);
                 }
+            }
+
+            if (Players.getLives(attackerUUID) == 1) {
+                int heartsReward = 20;
+                int currentMaxHealth = (int) attacker.getAttribute(Attribute.MAX_HEALTH).getBaseValue();
+                int newMaxHealth = currentMaxHealth;
+
+                int maxHealth = config.getInt("uhcMaxHearts");
+                int extraLoot = 0;
+
+                if ((maxHealth - currentMaxHealth) < heartsReward) {
+                    extraLoot = (heartsReward - (maxHealth - currentMaxHealth)) / 2;
+                    newMaxHealth = maxHealth;
+                } else {
+                    newMaxHealth += heartsReward;
+                }
+
+                attacker.getAttribute(Attribute.MAX_HEALTH).setBaseValue(newMaxHealth);
+                attacker.setHealth(newMaxHealth);
             }
         }
 
@@ -259,7 +278,7 @@ public class AllListeners implements Listener {
 
     @EventHandler
     public void onPlayerPickupArrow(PlayerPickupArrowEvent event) {
-        event.setCancelled(true);
+//        event.setCancelled(true);
     }
 
     @EventHandler

@@ -1,37 +1,36 @@
 package me.home4.firebush.firebush;
 
 import me.home4.firebush.firebush.commands.*;
+import me.home4.firebush.firebush.commands.amogus.SabotageCommand;
 import me.home4.firebush.firebush.commands.quests.ClaimQuestCommand;
 import me.home4.firebush.firebush.commands.quests.FailQuestCommand;
+import me.home4.firebush.firebush.commands.quests.GiveQuestCommand;
 import me.home4.firebush.firebush.commands.quests.RerollQuestCommand;
+import me.home4.firebush.firebush.commands.session.EndSessionCommand;
+import me.home4.firebush.firebush.commands.session.RefreshSeasonCommand;
+import me.home4.firebush.firebush.commands.session.SetSessionCommand;
+import me.home4.firebush.firebush.commands.session.StartSessionCommand;
 import me.home4.firebush.firebush.files.Players;
 import me.home4.firebush.firebush.files.SessionManager;
+import me.home4.firebush.firebush.files.amongus.KillCooldownManager;
+import me.home4.firebush.firebush.files.amongus.WeaponListener;
 import me.home4.firebush.firebush.gui.ActionBarTask;
 import me.home4.firebush.firebush.listeners.AllListeners;
 import org.bukkit.Bukkit;
-import me.home4.firebush.firebush.gui.ActionBar;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.io.File;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Objects;
 
 public final class Firebush extends JavaPlugin {
 
     public static Firebush plugin;
 
+    public static KillCooldownManager cooldownManager = new KillCooldownManager();
 
     @Override
     public void onEnable() {
@@ -51,6 +50,8 @@ public final class Firebush extends JavaPlugin {
         }
 
         getServer().getPluginManager().registerEvents(new AllListeners(this), this);
+        getServer().getPluginManager().registerEvents(new WeaponListener(cooldownManager), this);
+
         getCommand("resetlives").setExecutor(new ResetLivesCommand());
         getCommand("setlives").setExecutor(new SetLivesCommand());
         getCommand("die").setExecutor(new DieCommand());
@@ -67,7 +68,9 @@ public final class Firebush extends JavaPlugin {
         getCommand("failquest").setExecutor(new FailQuestCommand());
         getCommand("rerollquest").setExecutor(new RerollQuestCommand());
         getCommand("modifyhearts").setExecutor(new ModifyHeartsCommand());
+        getCommand("givequest").setExecutor(new GiveQuestCommand());
 
+        getCommand("sabotage").setExecutor(new SabotageCommand());
 
 
         // Load the config file, adding new defaults if necessary
@@ -90,7 +93,7 @@ public final class Firebush extends JavaPlugin {
         customTNTRecipe.shape("PSP", "SGS", "PSP");
 
         customTNTRecipe.setIngredient('P', Material.PAPER);
-        customTNTRecipe.setIngredient('S', Material.GRAVEL);
+        customTNTRecipe.setIngredient('S', Material.SAND);
         customTNTRecipe.setIngredient('G', Material.GUNPOWDER);
 
         getServer().addRecipe(customTNTRecipe);

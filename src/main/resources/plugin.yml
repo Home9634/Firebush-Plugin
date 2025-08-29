@@ -52,9 +52,16 @@ commands:
     description: Modifies a player's Hearts.
     usage: /<command>
     permission: op
+
   failquest:
     description: Fails a player's Quest.
     usage: /<command>
   rerollquest:
     description: Rerolls a player's Quest.
+    usage: /<command>
+  givequest:
+    description: Gives a player their quest book.
+    usage: /<command>
+  sabotage:
+    description: Sabotages available to the imposter
     usage: /<command>

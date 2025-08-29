@@ -1,4 +1,4 @@
-package me.home4.firebush.firebush.commands;
+package me.home4.firebush.firebush.commands.session;
 
 import me.home4.firebush.firebush.Firebush;
 import me.home4.firebush.firebush.files.Players;

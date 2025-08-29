@@ -9,6 +9,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.w3c.dom.Attr;
 
 import java.util.UUID;
 
@@ -26,7 +27,7 @@ public class GiftHeartCommand implements CommandExecutor {
 
             Player gifter = (Player) sender;
 
-            if (plugin.getConfig().getBoolean("giftHearts")) {
+            if (!plugin.getConfig().getBoolean("giftHearts")) {
                 gifter.sendMessage("Gifting hearts is disabled!");
                 return true;
             }
@@ -59,11 +60,12 @@ public class GiftHeartCommand implements CommandExecutor {
                 return true;
             }
 
-            player.sendTitle("", ChatColor.GREEN + "You recieved a heart from " + Players.getNick(gifter.getUniqueId().toString()), 10, 50, 20);
+            player.sendTitle("", ChatColor.GREEN + "You received a heart from " + Players.getNick(gifter.getUniqueId().toString()), 10, 50, 20);
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_GUITAR, 1.0f, 1.0f);
 
             player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(currentHearts + 2);
-            Players.get().set(uuid + ".gift", false);
+            player.setHealth(currentHearts + 2);
+            Players.get().set(gifter.getUniqueId().toString() + ".gift", false);
 
         }
 

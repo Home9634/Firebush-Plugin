@@ -19,10 +19,7 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 import static me.home4.firebush.firebush.Firebush.plugin;
 import static org.bukkit.Bukkit.getServer;
@@ -39,7 +36,7 @@ public class RerollQuestCommand implements CommandExecutor {
         String playerNick = sender.getName();
         String playerStringUUID = Players.getUUIDfromNick(playerNick);
         Player player = Bukkit.getPlayer(UUID.fromString(playerStringUUID));
-        String oldTask = Players.get().getString(playerStringUUID + ".task");
+        String oldTask = Players.getTask(playerStringUUID).getName();
 
         Random random = new Random();
 
@@ -66,12 +63,17 @@ public class RerollQuestCommand implements CommandExecutor {
             return true;
         }
 
+        if (Players.getLives(playerStringUUID) == 1) {
+            player.sendMessage("Red lives can't reroll quests!");
+            return true;
+        }
+
         TaskManager.removeTask(playerStringUUID);
 
         Collections.shuffle(hardTasks);
 
         Task hardTask = hardTasks.get(0);
-        Players.setTask(playerStringUUID, hardTask.getName());
+        Players.setTask(playerStringUUID, hardTask);
         Players.setHard(playerStringUUID, true);
 
         FileConfiguration config = plugin.getConfig();
@@ -88,10 +90,41 @@ public class RerollQuestCommand implements CommandExecutor {
             bookMeta.setTitle(ChatColor.GOLD + player.getName() + "'s Secret Task");
             bookMeta.setAuthor("The Firebush");
 
-            // Add pages with the task details
-            String taskPage = ChatColor.BOLD + hardTask.getName() + "\n\n" +
-                    ChatColor.RESET + hardTask.getTask();
-            bookMeta.addPage(taskPage);
+            // Define page limits for a Minecraft book (255 characters per page in Minecraft 1.21.3)
+            final int PAGE_LIMIT = 255;
+
+            // Add the task name to the first page
+            String taskHeader = ChatColor.BOLD + hardTask.getName() + "\n\n" + ChatColor.RESET;
+
+            // Combine the header with the task description
+            String fullText = taskHeader + hardTask.getTask();
+
+            System.out.println("Full Text Length" + fullText.length());
+
+            // Split the full text into pages
+            List<String> pages = new ArrayList<>();
+            while (fullText.length() > PAGE_LIMIT) {
+                int splitIndex = PAGE_LIMIT;
+
+                // Avoid cutting off mid-word
+                while (splitIndex > 0 && fullText.charAt(splitIndex) != ' ') {
+                    splitIndex--;
+                }
+                if (splitIndex == 0) {
+                    splitIndex = PAGE_LIMIT; // If no spaces found, force a split
+                }
+
+                // Add the split text to the pages list
+                System.out.println(fullText);
+                pages.add(fullText.substring(0, splitIndex).trim());
+                fullText = fullText.substring(splitIndex).trim(); // Remaining text
+            }
+
+            // Add the last chunk as the final page
+            pages.add(fullText);
+
+            // Add all pages to the book
+            bookMeta.setPages(pages);
 
             // Apply the meta to the item
             writtenBookItem.setItemMeta(bookMeta);
@@ -107,6 +140,8 @@ public class RerollQuestCommand implements CommandExecutor {
             public void run() {
                 if (ticks == 0) {
                     droppedBook.setGravity(false);
+                    player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_AMBIENT, 1, 1);
+                    player.getWorld().playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.5f);
                 }
                 droppedBook.setVelocity(new org.bukkit.util.Vector());
 
@@ -119,14 +154,22 @@ public class RerollQuestCommand implements CommandExecutor {
                 }
                 // Particles for burning effect
                 if (ticks > 10 && ticks < 30) {
+                    player.getWorld().playSound(droppedBook.getLocation(), Sound.BLOCK_FIRE_AMBIENT, 1, 1);
+                    if (ticks % 5 == 0) {
+//                        player.getWorld().playSound(droppedBook.getLocation(), Sound.ENTITY_BLAZE_DEATH, 1, 1);
+                    }
                     player.spawnParticle(Particle.FLAME, droppedBook.getLocation().add(0, 0.5, 0), 10, 0.1, 0.1, 0.1, 0.02);
                     player.spawnParticle(Particle.SMOKE, droppedBook.getLocation().add(0, 0.5, 0 ), 5, 0.1, 0.1, 0.1, 0.02);
                 }
                 if (ticks == 20) {
+                    player.getWorld().playSound(droppedBook.getLocation(), Sound.ENTITY_BLAZE_DEATH, 1, 1);
+                    player.getWorld().playSound(droppedBook.getLocation(), Sound.ENTITY_GENERIC_EXTINGUISH_FIRE, 1, 1);
+                    player.getWorld().playSound(droppedBook.getLocation(), Sound.BLOCK_SMOKER_SMOKE, 0.5f, 1);
                     droppedBook.remove();
                 }
 
                 if (ticks > 40) {
+
                     // Generate particles from random points far away and move them closer to the reward spot
                     int particleCount = 10; // Number of particles per tick
 
@@ -157,6 +200,8 @@ public class RerollQuestCommand implements CommandExecutor {
                 }
 
                 if (ticks == 80) {
+                    player.getWorld().playSound(rewardsLocation, Sound.BLOCK_ENCHANTMENT_TABLE_USE, 1, 1);
+                    player.getWorld().playSound(rewardsLocation, Sound.ENTITY_ITEM_PICKUP, 0.5f, 1.5f);
                     droppedWrittenBook = player.getWorld().dropItem(rewardsLocation, writtenBookItem);
                     droppedWrittenBook.setPickupDelay(Integer.MAX_VALUE);
                     droppedWrittenBook.setGravity(false);
@@ -164,11 +209,17 @@ public class RerollQuestCommand implements CommandExecutor {
 
                 ticks++;
                 if (ticks > 90) {
+                    player.getWorld().playSound(droppedWrittenBook.getLocation(), Sound.ENTITY_ILLUSIONER_PREPARE_BLINDNESS, 1, 1);
+
                     droppedWrittenBook.setPickupDelay(0);
                     droppedWrittenBook.setOwner(player.getUniqueId());
                         droppedWrittenBook.setVelocity(new Vector(0, -0.1, 0)); // Add a slow downward motion
 
                     cancel();
+                }
+
+                if (ticks == 95) {
+                    player.getWorld().playSound(droppedWrittenBook.getLocation(), Sound.BLOCK_ANVIL_LAND, 0.5f, 2);
                 }
             }
         }.runTaskTimer(plugin, 0L, 2L); // Runs every 2 ticks (0.1 second intervals)

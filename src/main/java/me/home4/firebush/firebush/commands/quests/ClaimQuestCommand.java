@@ -1,6 +1,7 @@
 package me.home4.firebush.firebush.commands.quests;
 
 import me.home4.firebush.firebush.Firebush;
+import me.home4.firebush.firebush.classes.Task;
 import me.home4.firebush.firebush.files.FileManager;
 import me.home4.firebush.firebush.files.Players;
 import me.home4.firebush.firebush.files.TaskManager;
@@ -10,6 +11,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.generator.WorldInfo;
@@ -17,6 +19,7 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.inventory.meta.EnchantmentStorageMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
@@ -57,7 +60,7 @@ public class ClaimQuestCommand implements CommandExecutor {
             return true;
         }
 
-        if (Players.get().getString(playerStringUUID + ".task").equals("")) {
+        if (Players.getTask(playerStringUUID).getName().equals("")) {
             player.sendMessage("You don't have a task to redeem!");
             return true;
         }
@@ -73,6 +76,10 @@ public class ClaimQuestCommand implements CommandExecutor {
             heartsReward *= 2;
         }
 
+        if (Players.getLives(playerStringUUID) == 1) {
+            // heartsReward /= 2
+        }
+
         int extraLoot = 0;
 
         if ((maxHealth - currentMaxHealth) < heartsReward) {
@@ -80,6 +87,10 @@ public class ClaimQuestCommand implements CommandExecutor {
             newMaxHealth = maxHealth;
         } else {
             newMaxHealth += heartsReward;
+        }
+
+        if (extraLoot < 2) {
+            extraLoot = 2;
         }
 
         player.getAttribute(Attribute.MAX_HEALTH).setBaseValue(newMaxHealth);
@@ -93,7 +104,7 @@ public class ClaimQuestCommand implements CommandExecutor {
         PlayerInventory inventory = player.getInventory();
         TaskManager.removeTask(playerStringUUID);
 
-        Players.setTask(playerStringUUID, "");
+        Players.setTask(playerStringUUID, null);
 
         Collections.shuffle(questRewards);
         int finalExtraLoot = extraLoot;
@@ -160,6 +171,7 @@ public class ClaimQuestCommand implements CommandExecutor {
     private void spawnRewards(Player player, List<String> questRewards, Location rewardsLocation, int finalExtraLoot) {
         World world = rewardsLocation.getWorld();
         List<Item> spawnedItems = new ArrayList<>();
+        List<String> questEggRewards = config.getStringList("questEggRewards"); // Load the egg rewards list
 
         new BukkitRunnable() {
             int rewardIndex = 0;
@@ -167,18 +179,26 @@ public class ClaimQuestCommand implements CommandExecutor {
             @Override
             public void run() {
                 if (rewardIndex >= questRewards.size() - 1 || rewardIndex >= finalExtraLoot) {
+                    HashMap<String, Task> playerTaskMap = new HashMap<>();
+                    Task redTask = new TaskManager().getRandomRedTask();
+                    String playerUUID = player.getUniqueId().toString();
+
+                    if (Players.getLives(playerUUID) == 1) {
+                        playerTaskMap.put(playerUUID, redTask);
+                        TaskManager.givePlayerTask(player, playerTaskMap);
+                    }
+
+
                     cancel(); // Stop the task once all rewards are spawned
                     return;
                 }
 
-                // Parse the reward string
                 String reward = questRewards.get(rewardIndex);
                 String[] parts = reward.split(":");
                 String itemName = parts[0];
                 int minAmount = 1;
                 int maxAmount = 1;
 
-                // Parse min-max amounts
                 if (parts.length > 1) {
                     String[] amounts = parts[1].split("-");
                     minAmount = Integer.parseInt(amounts[0]);
@@ -187,30 +207,64 @@ public class ClaimQuestCommand implements CommandExecutor {
                     }
                 }
 
-                // Generate random amount
                 int amount = minAmount + (int) (Math.random() * (maxAmount - minAmount + 1));
 
-                // Create the item stack
-                Material material = Material.getMaterial(itemName.toUpperCase());
-                if (material == null) {
-                    player.sendMessage(ChatColor.RED + "Invalid reward item: " + itemName);
-                    rewardIndex++;
-                    return;
-                }
+                ItemStack itemStack;
+                if (itemName.equalsIgnoreCase("spawn_egg")) {
+                    // Handle spawn eggs
+                    List<String> eggRewards = plugin.getConfig().getStringList("questEggRewards");
+                    String randomEgg = eggRewards.get(new Random().nextInt(eggRewards.size()));
+                    itemStack = new ItemStack(Material.valueOf(randomEgg.toUpperCase() + "_SPAWN_EGG"), amount);
 
-                ItemStack itemStack = new ItemStack(material, amount);
-                ItemMeta meta = itemStack.getItemMeta();
+                } else if (itemName.equalsIgnoreCase("enchanted_book")) {
+                    // Handle enchanted books
+                    List<String> bookRewards = plugin.getConfig().getStringList("questEnchantedBookRewards");
+                    String randomEnchantment = bookRewards.get(new Random().nextInt(bookRewards.size()));
+                    String[] enchantmentParts = randomEnchantment.split(":");
+                    String enchantmentName = enchantmentParts[0];
+                    int minLevel = Integer.parseInt(enchantmentParts[1].split("-")[0]);
+                    int maxLevel = enchantmentParts[1].contains("-") ? Integer.parseInt(enchantmentParts[1].split("-")[1]) : minLevel;
+                    int level = minLevel + (int) (Math.random() * (maxLevel - minLevel + 1));
 
-                // Optional: Add custom lore or name
-                if (meta != null) {
-                    // meta.setDisplayName(ChatColor.GOLD + "Quest Reward");
-                    itemStack.setItemMeta(meta);
+                    itemStack = new ItemStack(Material.ENCHANTED_BOOK);
+                    Enchantment enchantment = Enchantment.getByKey(NamespacedKey.minecraft(enchantmentName.toLowerCase()));
+                    if (enchantment != null) {
+                        ItemMeta meta = itemStack.getItemMeta();
+                        if (meta instanceof EnchantmentStorageMeta) {
+                            EnchantmentStorageMeta storageMeta = (EnchantmentStorageMeta) meta;
+                            storageMeta.addStoredEnchant(enchantment, level, true);
+                            itemStack.setItemMeta(storageMeta);
+                        }
+                    } else {
+                        player.sendMessage(ChatColor.RED + "Invalid enchantment: " + enchantmentName);
+                        rewardIndex++;
+                        return;
+                    }
+                } else if (itemName.equalsIgnoreCase("armor")) {
+                    List<String> armorRewards = plugin.getConfig().getStringList("questArmorRewards");
+                    String randomArmor = "diamond_" + armorRewards.get(new Random().nextInt(armorRewards.size()));
+
+                    itemStack = new ItemStack(Material.valueOf(randomArmor.toUpperCase()), amount);
+                } else if (itemName.equalsIgnoreCase("tool")) {
+                    List<String> armorRewards = plugin.getConfig().getStringList("questToolRewards");
+                    String randomArmor = "diamond_" + armorRewards.get(new Random().nextInt(armorRewards.size()));
+
+                    itemStack = new ItemStack(Material.valueOf(randomArmor.toUpperCase()), amount);
+                } else {
+                    // Handle regular items
+                    Material material = Material.getMaterial(itemName.toUpperCase());
+                    if (material == null) {
+                        player.sendMessage(ChatColor.RED + "Invalid reward item: " + itemName);
+                        rewardIndex++;
+                        return;
+                    }
+                    itemStack = new ItemStack(material, amount);
                 }
 
                 // Drop the item
-                Item droppedItem = getServer().getWorld("world").dropItem(rewardsLocation, itemStack);
-                droppedItem.setOwner(player.getUniqueId()); // Ensure only the player can pick up the item
-                droppedItem.setPickupDelay(20); // Small delay before pickup
+                Item droppedItem = world.dropItem(rewardsLocation, itemStack);
+                droppedItem.setOwner(player.getUniqueId());
+                droppedItem.setPickupDelay(20);
                 spawnedItems.add(droppedItem);
 
                 // Cool visual effects and sound for each item

@@ -7,6 +7,13 @@ public class Task {
 
     private Integer id;
 
+    public Task(String name, String description, int session, Integer id) {
+        this.name = name;
+        this.description = description;
+        this.session = session;
+        this.id = id;
+    }
+
     // Getters
     public String getName() {
         return name;

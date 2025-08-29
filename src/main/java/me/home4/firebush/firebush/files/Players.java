@@ -1,6 +1,7 @@
 package me.home4.firebush.firebush.files;
 
 import me.home4.firebush.firebush.Firebush;
+import me.home4.firebush.firebush.classes.Task;
 import me.home4.firebush.firebush.gui.LifeScoreboard;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -13,6 +14,7 @@ import org.bukkit.inventory.PlayerInventory;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -159,6 +161,18 @@ public class Players {
         return alivePlayers;
     }
 
+    public static ArrayList<String> getNonRedPlayers() {
+        ArrayList<String> nonRedPLayers = new ArrayList<>();
+
+        for (String key: customFile.getKeys(false)) {
+            if (Players.getLives(key) > 1) {
+                nonRedPLayers.add(key);
+            }
+        }
+
+        return nonRedPLayers;
+    }
+
     public static void clear() {
         for (String key: customFile.getKeys(false)) {
             if (!customFile.getBoolean(key + ".excluded")) {
@@ -169,15 +183,53 @@ public class Players {
         Players.save();
     }
 
-    public static void setTask(String uuid, String taskName) {
-
-        Players.get().set(uuid + ".task", taskName);
+    public static void setTask(String uuid, Task task) {
+        if (task == null) {
+            Players.get().set(uuid + ".task.name", "");
+            Players.get().set(uuid + ".task.task", "");
+            Players.get().set(uuid + ".task.id", "");
+            Players.get().set(uuid + ".task.session", "");
+        } else {
+            Players.get().set(uuid + ".task.name", task.getName());
+            Players.get().set(uuid + ".task.task", task.getTask());
+            Players.get().set(uuid + ".task.id", task.getId());
+            Players.get().set(uuid + ".task.session", task.getSession());
+        }
         Players.get().set(uuid + ".hardtask", false);
         Players.save();
     }
+
     public static void setHard(String uuid, Boolean isHard) {
         Players.get().set(uuid + ".hardtask", isHard);
         Players.save();
+    }
+
+    public static Task getTask(String uuid) {
+        return new Task(
+            Players.get().getString(uuid + ".task.name"),
+            Players.get().getString(uuid + ".task.task"),
+            Players.get().getInt(uuid + ".task.session"),
+            Players.get().getInt(uuid + ".task.id")
+        );
+    }
+
+    public static HashMap<String, Task> getPlayerTasks() {
+        HashMap<String, Task> playerTasks = new HashMap<>();
+
+        List<String> alivePlayers = getAlivePlayers();
+        for (int i = 0; i < alivePlayers.size(); i++) {
+            try {
+                String currentPlayer = alivePlayers.get(i);
+                Task assignedTask = Players.getTask(currentPlayer);
+
+                // Assign the task to the current player and persist it
+                playerTasks.put(currentPlayer, assignedTask);
+            } catch (Exception e) {
+                Bukkit.getLogger().severe("Failed to assign player a task: " + e.getMessage());
+            }
+        }
+
+        return playerTasks;
     }
 
     public static void saveInventory(Player player) {
@@ -236,7 +288,10 @@ public class Players {
         Players.get().set(playerUUID + ".isPink", false);
         Players.get().set(playerUUID + ".maxHealth", Firebush.getPlugin().getConfig().get("uhcMaxHeart"));
         Players.get().set(playerUUID + ".hasTask", false);
-        Players.get().set(playerUUID + ".task", "");
+        Players.get().set(playerUUID + ".task.name", "");
+        Players.get().set(playerUUID + ".task.task", "");
+        Players.get().set(playerUUID + ".task.session", "");
+        Players.get().set(playerUUID + ".task.id", "");
         Players.get().set(playerUUID + ".hardtask", false);
         Players.get().set(playerUUID + ".gifted", false);
         Players.get().set(playerUUID + ".excluded", false);
